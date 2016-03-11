@@ -45,6 +45,8 @@ import serial
 import time
 import re
 
+from pyftdi import serialext
+
 cmd = os.path.basename(sys.argv[0])
 verbose = 0
 
@@ -167,11 +169,6 @@ def main():
 			usage(0)
                 if opt in ["-d", "--device"]:
                         device = arg
-			if not device_exists(device):
-				print("Error: serial device '%s' does not exist" % device)
-			        sd.close()
-				usage(2)
-			sd.port = device
 		if opt in ["-b", "--baudrate"]:
 			baud = int(arg)
 			if baud not in sd.BAUDRATES:
@@ -243,6 +240,8 @@ def main():
 			print("grabserial version %d.%d.%d" % (MAJOR_VERSION, MINOR_VERSION, REVISION))
 			sd.close()
 			sys.exit(0)
+
+        sd = serial.serial_for_url(device, baudrate=115200)
 
 	# if verbose, show what our settings are
 	vprint("Opening serial port %s" % sd.port)
