@@ -44,6 +44,7 @@ import getopt
 import serial
 import time
 import re
+import string
 
 from pyftdi import serialext
 
@@ -69,6 +70,7 @@ options:
     -f, --force-reset      Force pyserial to reset device parameters
     -e, --endtime=<secs>   End the program after the specified seconds have
                            elapsed.
+    -E, --escape           Escape non-printable characters.
     -c, --command=<cmd>    Send a command to the port before reading
     -t, --time             Print time for each line received.  The time is
                            when the first character of each line is
@@ -115,7 +117,7 @@ def main():
 	# parse the command line options
 	try:
 		opts, args = getopt.getopt(sys.argv[1:],
-			 "hli:d:b:w:p:s:xrfc:tTm:e:o:vVq:", [
+			 "hli:d:b:w:p:s:xrfc:tTm:e:o:vVq:E", [
 				"help",
 				"launchtime",
 				"instantpat=",
@@ -135,7 +137,8 @@ def main():
 				"output=",
 				"verbose",
 				"version",
-				"quitpat="])
+				"quitpat=",
+				"escape"])
 	except:
 		# print help info and exit
 		print("Error parsing command line options")
@@ -163,12 +166,14 @@ def main():
 	endtime = 0
 	outputfile = None
 	command = ""
+	escape = False
 
 	for opt, arg in opts:
 		if opt in ["-h", "--help"]:
 			usage(0)
                 if opt in ["-d", "--device"]:
                         device = arg
+			sd.port = device
 		if opt in ["-b", "--baudrate"]:
 			baud = int(arg)
 			if baud not in sd.BAUDRATES:
@@ -217,6 +222,8 @@ def main():
 			show_systime=1
 		if opt in ["-m", "--match"]:
 			basepat=arg
+		if opt in ["-E", "--escape"]:
+			escape = True
 		if opt in ["-i", "--instantpat"]:
 			instantpat=arg
 		if opt in ["-q", "--quitpat"]:
@@ -241,7 +248,7 @@ def main():
 			sd.close()
 			sys.exit(0)
 
-        sd = serial.serial_for_url(device, baudrate=115200)
+	# sd = serial.serial_for_url(device, baudrate=115200)
 
 	# if verbose, show what our settings are
 	vprint("Opening serial port %s" % sd.port)
@@ -295,6 +302,8 @@ def main():
 		try:
 			# read for up to 1 second
 			x = sd.read()
+			if escape:
+				x = ''.join([k if k in string.printable else k.encode('string_escape') for k in x])
 
 			# see if we're supposed to stop yet
 			if endtime and time.time()>endtime:
