@@ -298,12 +298,13 @@ def main():
 		sd.flush()
 
 	# read from the serial port until something stops the program
+	printable = reduce(lambda s, i: s.replace(i, ''), '\r\t\x0b\x0c', string.printable)
 	while(1):
 		try:
 			# read for up to 1 second
 			x = sd.read()
 			if escape:
-				x = ''.join([k if k in string.printable else k.encode('string_escape') for k in x])
+				x = ''.join([k if k in printable else k.encode('string_escape') for k in x])
 
 			# see if we're supposed to stop yet
 			if endtime and time.time()>endtime:
